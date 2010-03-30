@@ -292,6 +292,10 @@ HRESULT DecodedStream::DeliverCurrentPicture(IMediaSample * pSample)
 	pSample->SetDiscontinuity(FALSE);
 	pSample->SetPreroll(FALSE);
 	pSample->SetSyncPoint(TRUE);
+
+// 	AM_MEDIA_TYPE* pMtest;
+// 	pSample->GetMediaType(&pMtest);
+	
 	HRESULT hr = Deliver(pSample);
 	pSample->Release();
 	return hr;
