@@ -1,0 +1,8 @@
+;
+LIBRARY		CudaDecodeFilter.ax
+DESCRIPTION	'Cuda Decoder Filter'
+EXPORTS
+DllGetClassObject PRIVATE
+DllCanUnloadNow PRIVATE
+DllRegisterServer PRIVATE
+DllUnregisterServer PRIVATE
