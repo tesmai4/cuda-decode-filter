@@ -15,14 +15,12 @@ CudaDecodeInputPin::~CudaDecodeInputPin()
 HRESULT CudaDecodeInputPin::CheckMediaType( const CMediaType * mtIn )
 {
 	//testing
-	if (mtIn->majortype == MEDIATYPE_Video /*||
-		mtIn->majortype == MEDIATYPE_MPEG2_PES) &&
-		mtIn->subtype == MEDIASUBTYPE_MPEG2_VIDEO*/)
+	if (mtIn->majortype == MEDIATYPE_Video && mtIn->subtype == MEDIATYPE_H264)
 	{
 		return NOERROR;
 	}
+	
 	return E_FAIL;
-
 }
 
 STDMETHODIMP CudaDecodeInputPin::Receive( IMediaSample *pSample )

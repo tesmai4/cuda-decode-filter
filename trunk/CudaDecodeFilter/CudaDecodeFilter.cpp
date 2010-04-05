@@ -349,7 +349,7 @@ HRESULT CudaDecodeFilter::CompleteConnect( PIN_DIRECTION inDirection, IPin * inR
 	if (inDirection == PINDIR_INPUT)
 	{
 		CMediaType  mtIn = m_CudaDecodeInputPin->CurrentMediaType();
-		//if (mtIn.formattype == FORMAT_MPEG2Video)//??????????
+		if (mtIn.formattype == FORMAT_VIDEOINFO2)//testing
 		{
 			//testing !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			VIDEOINFOHEADER2 * pFormat = (VIDEOINFOHEADER2 *) mtIn.pbFormat;
