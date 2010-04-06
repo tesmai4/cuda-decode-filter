@@ -23,9 +23,9 @@
 #define ERROR_FLUSH     200
 
 #define MAX_FRM_CNT             16
-#define DISPLAY_DELAY           1  // Attempt to decode up to 4 frames ahead of display // why  4 will wrong? 1 is ok
-#define USE_ASYNC_COPY          1
-#define USE_FLOATING_CONTEXTS   1   // Use floating contexts
+#define DISPLAY_DELAY           1  // testing! 4 and use_async = 0 is also OK ? Attempt to decode up to 4 frames ahead of display // why  4 will wrong? 1 is ok
+#define USE_ASYNC_COPY          0
+#define USE_FLOATING_CONTEXTS   1  // Use floating contexts
 
 
 // Specify H.264 GUID manually
