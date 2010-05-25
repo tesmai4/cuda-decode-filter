@@ -1,3 +1,15 @@
+//------------------------------------------------------------------------------
+// File: CudaDecodeFilter.cpp
+// 
+// Author: Ren Yifei, Lin Ziya
+//
+// Contact: yfren@cs.hku.hk, zlin@cs.hku.hk
+// 
+// Desc: The main decoder class, manages the frame receive/deliver,
+// derived from CSource in DirectShow.
+//
+//------------------------------------------------------------------------------
+
 #include "CudaDecodeFilter.h"
 #include "CudaDecodeInputPin.h"
 #include "MediaController.h"
@@ -98,14 +110,14 @@ CudaDecodeFilter::CudaDecodeFilter( TCHAR *tszName, LPUNKNOWN punk, HRESULT *phr
 {
 	decoderInstances++;
 
-	mSampleDuration = 0;
-	mImageWidth     = 0;
-	mImageHeight    = 0;
-	mOutputImageSize = 0;
+	m_SampleDuration = 0;
+	m_ImageWidth     = 0;
+	m_ImageHeight    = 0;
+	m_OutputImageSize = 0;
 
-	mIsFlushing    = FALSE;
-	mEOSDelivered  = FALSE;
-	mEOSReceived   = FALSE;
+	m_IsFlushing    = FALSE;
+	m_EOSDelivered  = FALSE;
+	m_EOSReceived   = FALSE;
 	m_CudaDecodeInputPin = NULL;
 
 	*phr = NOERROR;
@@ -192,7 +204,7 @@ STDMETHODIMP CudaDecodeFilter::Stop()
 		m_paStreams[0]->IsConnected() == FALSE) 
 	{
 		m_State = State_Stopped;
-		mEOSDelivered = FALSE;
+		m_EOSDelivered = FALSE;
 		return NOERROR;
 	}
 
@@ -214,7 +226,7 @@ STDMETHODIMP CudaDecodeFilter::Stop()
 	{
 		// complete the state transition
 		m_State = State_Stopped;
-		mEOSDelivered = FALSE;
+		m_EOSDelivered = FALSE;
 	}
 	return hr;
 }
@@ -235,10 +247,10 @@ STDMETHODIMP CudaDecodeFilter::Pause()
 	// samples which we cannot ever deliver without an input connection.
 	else if (m_CudaDecodeInputPin == NULL || m_CudaDecodeInputPin->IsConnected() == FALSE) 
 	{
-		if(m_paStreams[0]->IsConnected() && mEOSDelivered == FALSE) 
+		if(m_paStreams[0]->IsConnected() && m_EOSDelivered == FALSE) 
 		{
 			m_paStreams[0]->DeliverEndOfStream();
-			mEOSDelivered = TRUE;
+			m_EOSDelivered = TRUE;
 		}
 		m_State = State_Paused;
 	}
@@ -272,15 +284,15 @@ STDMETHODIMP CudaDecodeFilter::Pause()
 
 HRESULT CudaDecodeFilter::StartStreaming()
 {
-	mIsFlushing  = FALSE;
-	mEOSReceived = FALSE;
+	m_IsFlushing  = FALSE;
+	m_EOSReceived = FALSE;
 	return NOERROR;
 }
 
 HRESULT CudaDecodeFilter::StopStreaming()
 {
-	mIsFlushing  = FALSE;
-	mEOSReceived = FALSE;
+	m_IsFlushing  = FALSE;
+	m_EOSReceived = FALSE;
 	return NOERROR;
 }
 
@@ -305,9 +317,9 @@ HRESULT CudaDecodeFilter::Receive( IMediaSample *pSample )
 HRESULT CudaDecodeFilter::EndOfStream( void )
 {
 	// Ignoring the more than twice EOS
-	if (!mEOSReceived)
+	if (!m_EOSReceived)
 	{
-		mEOSReceived  = TRUE;
+		m_EOSReceived  = TRUE;
 		m_MediaController->BeginEndOfStream();
 		// Wait for all caching data having been fetched out
 		//	while (!mMpegController.IsCacheOutputWaiting() && 
@@ -330,17 +342,17 @@ HRESULT CudaDecodeFilter::NewSegment( REFERENCE_TIME tStart, REFERENCE_TIME tSto
 
 HRESULT CudaDecodeFilter::BeginFlush( void )
 {
-	HRESULT hr  = m_paStreams[0]->DeliverBeginFlush(); // Call downstreamly
-	mIsFlushing = TRUE;
+	HRESULT hr  = m_paStreams[0]->DeliverBeginFlush();
+	m_IsFlushing = TRUE;
 	OutputPin()->BeginFlush();
 	return hr;
 }
 
 HRESULT CudaDecodeFilter::EndFlush( void )
 {
-	mEOSReceived = FALSE;
+	m_EOSReceived = FALSE;
 	OutputPin()->EndFlush();
-	mIsFlushing = FALSE;
+	m_IsFlushing = FALSE;
 	return m_paStreams[0]->DeliverEndFlush();
 }
 
@@ -349,14 +361,14 @@ HRESULT CudaDecodeFilter::CompleteConnect( PIN_DIRECTION inDirection, IPin * inR
 	if (inDirection == PINDIR_INPUT)
 	{
 		CMediaType  mtIn = m_CudaDecodeInputPin->CurrentMediaType();
-		if (mtIn.formattype == FORMAT_VIDEOINFO2)//testing
+		if (mtIn.formattype == FORMAT_VIDEOINFO2)
 		{
-			//testing !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			VIDEOINFOHEADER2 * pFormat = (VIDEOINFOHEADER2 *) mtIn.pbFormat;
-			mSampleDuration = pFormat->AvgTimePerFrame;
-			mImageWidth     = pFormat->bmiHeader.biWidth;
-			mImageHeight    = pFormat->bmiHeader.biHeight;
-			// Init the mpeg decoder system
+			m_SampleDuration = pFormat->AvgTimePerFrame;
+			m_ImageWidth     = pFormat->bmiHeader.biWidth;
+			m_ImageHeight    = pFormat->bmiHeader.biHeight;
+
+			// Init the decoder system
 			m_MediaController->Uninitialize();
 			m_MediaController->Initialize(this->OutputPin());
 			return S_OK;
@@ -366,7 +378,7 @@ HRESULT CudaDecodeFilter::CompleteConnect( PIN_DIRECTION inDirection, IPin * inR
 	{
 		CMediaType  mtOut = OutputPin()->CurrentMediaType();
 		int bitcount = 2;
-		if (mtOut.subtype == MEDIASUBTYPE_IYUV)//testing!
+		if (mtOut.subtype == MEDIASUBTYPE_IYUV)
 		{
 			bitcount = 2;
 			m_MediaController->SetOutputType(2);
@@ -376,8 +388,8 @@ HRESULT CudaDecodeFilter::CompleteConnect( PIN_DIRECTION inDirection, IPin * inR
 			bitcount = 3;
 			m_MediaController->SetOutputType(1);
 		}
-		mOutputImageSize = mImageWidth * mImageHeight * bitcount;
-		m_MediaController->SetOutputImageSize(mOutputImageSize);
+		m_OutputImageSize = m_ImageWidth * m_ImageHeight * bitcount;
+		m_MediaController->SetOutputImageSize(m_OutputImageSize);
 		return S_OK;
 	}
 	return E_FAIL;

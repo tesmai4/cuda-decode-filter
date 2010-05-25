@@ -1,9 +1,21 @@
+//------------------------------------------------------------------------------
+// File: CudaDecoder.h
+// 
+// Author: Ren Yifei, Lin Ziya
+//
+// Contact: yfren@cs.hku.hk, zlin@cs.hku.hk
+// 
+// Desc: The decoder class based on CUDA Decoder API. 
+// It handles actual frame decoding.
+//
+//------------------------------------------------------------------------------
+
 #ifndef CUDA_DECODER_H_
 #define CUDA_DECODER_H_
 
 #include "StdHeader.h"
 
-// Autolock for floating contexts
+// Auto lock for floating contexts
 class CAutoCtxLock
 {
 private:
@@ -41,17 +53,17 @@ public:
 
 	virtual ~CudaH264Decoder();
 	
-	bool	Init(DecodedStream* decodedStream);
+	bool				Init(DecodedStream* decodedStream);
 
-	bool	FetchVideoData(BYTE* ptr, unsigned int size);
+	bool				FetchVideoData(BYTE* ptr, unsigned int size);
 
-	BYTE*	GetOutputBufferPtr() const;
+	BYTE*				GetOutputBufferPtr() const;
 
 protected:
 
-	bool InitCuda(CUvideoctxlock *pLock);
+	bool				InitCuda(CUvideoctxlock *pLock);
 
-	bool ReleaseCuda();
+	bool				ReleaseCuda();
 
 	static int CUDAAPI 	HandleVideoSequence(void *pvUserData, CUVIDEOFORMAT *pFormat);
 	static int CUDAAPI 	HandlePictureDecode(void *pvUserData, CUVIDPICPARAMS *pPicParams);

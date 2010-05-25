@@ -1,8 +1,26 @@
+//------------------------------------------------------------------------------
+// File: CudaDecodeInputPin.cpp
+// 
+// Author: Ren Yifei, Lin Ziya
+//
+// Contact: yfren@cs.hku.hk, zlin@cs.hku.hk
+// 
+// Desc: The input pin class which handles connection with 
+// upstream filter out pin and source frame receiving.
+//
+//------------------------------------------------------------------------------
+
 #include "CudaDecodeInputPin.h"
 #include "CudaDecodeFilter.h"
 
-CudaDecodeInputPin::CudaDecodeInputPin( TCHAR * inObjectName, CudaDecodeFilter * inFilter, HRESULT * outResult )
-					: CBaseInputPin(inObjectName, inFilter, inFilter->pStateLock(), outResult, L"Input")
+CudaDecodeInputPin::CudaDecodeInputPin( TCHAR * inObjectName, 
+										CudaDecodeFilter * inFilter, 
+										HRESULT * outResult ) 
+: CBaseInputPin(inObjectName, 
+				inFilter, 
+				inFilter->pStateLock(), 
+				outResult, 
+				L"Input")
 {
 	m_DecodeFilter = inFilter;
 }
@@ -14,7 +32,6 @@ CudaDecodeInputPin::~CudaDecodeInputPin()
 
 HRESULT CudaDecodeInputPin::CheckMediaType( const CMediaType * mtIn )
 {
-	//testing
 	if (mtIn->majortype == MEDIATYPE_Video && mtIn->subtype == MEDIATYPE_H264)
 	{
 		return NOERROR;
@@ -68,7 +85,7 @@ STDMETHODIMP CudaDecodeInputPin::BeginFlush( void )
 STDMETHODIMP CudaDecodeInputPin::EndFlush( void )
 {
 	CAutoLock lck(m_DecodeFilter->pStateLock());
-	//  Are we actually doing anything?
+
 	if (!IsConnected() || !m_DecodeFilter->m_paStreams[0]->IsConnected()) 
 	{
 		return VFW_E_NOT_CONNECTED;

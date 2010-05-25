@@ -1,3 +1,15 @@
+//------------------------------------------------------------------------------
+// File: CudaDecoder.cpp
+// 
+// Author: Ren Yifei, Lin Ziya
+//
+// Contact: yfren@cs.hku.hk, zlin@cs.hku.hk
+// 
+// Desc: The decoder class based on CUDA Decoder API. 
+// It handles actual frame decoding.
+//
+//------------------------------------------------------------------------------
+
 #include "CudaDecoder.h"
 #include "MediaController.h"
 #include "CudaDecodeFilter.h"
@@ -40,10 +52,10 @@ bool CudaH264Decoder::Init(DecodedStream* decodedStream)
 	if(!this->InitCuda(&m_state.cuCtxLock))
 		return false;
 
-	//init outputPin
+	// init outputPin
 	m_DecodedStream = decodedStream;
 
-	//init InputBuffer
+	// init InputBuffer
 	m_InputBuffer = new BYTE[DECODER_BUFFER_SIZE];
 
 	m_parserInitParams.CodecType = cudaVideoCodec_H264;
@@ -100,21 +112,19 @@ bool CudaH264Decoder::InitCuda(CUvideoctxlock *pLock)
 	err = cuInit(0);
 	if (err != CUDA_SUCCESS)
 	{
-		//printf("ERROR: cuInit failed (%d)\n", err);
 		return false;
 	}
 	// Create an instance of Direct3D.
 	m_pD3D = Direct3DCreate9(D3D_SDK_VERSION);
 	if (m_pD3D == NULL)
 	{
-		//printf("ERROR: failed to create D3D9\n");
 		return false;
 	}
 
 	lAdapterCount = m_pD3D->GetAdapterCount();
 	for (lAdapter=0; lAdapter<lAdapterCount; lAdapter++)
 	{
-		// Create the Direct3D9 device and the swap chain. In this example, the swap 
+		// Create the Direct3D9 device and the swap chain. the swap 
 		// chain is the same size as the current display mode. The format is RGB-32.
 		ZeroMemory(&d3dpp, sizeof(d3dpp));
 		d3dpp.Windowed = TRUE;
@@ -155,7 +165,6 @@ bool CudaH264Decoder::InitCuda(CUvideoctxlock *pLock)
 			m_pD3Dev = NULL;
 		}
 	}
-	printf("ERROR: Failed to find CUDA-compatible D3D device (%d)\n", err);
 	return false;
 }
 
@@ -243,9 +252,6 @@ int CUDAAPI CudaH264Decoder::HandleVideoSequence(void *pvUserData, CUVIDEOFORMAT
 // index we're attempting to use for decode is no longer used for display
 int CUDAAPI CudaH264Decoder::HandlePictureDecode(void *pvUserData, CUVIDPICPARAMS *pPicParams)
 {
-	//if(!m_CanDecode)
-	//	return 1;
-
 	DecodeSession *state = (DecodeSession *)pvUserData;
 	CAutoCtxLock lck(state->cuCtxLock);
 	CUresult result;
@@ -364,18 +370,15 @@ void CudaH264Decoder::SendFrameDownStream()
   	{
   		Sleep(1);
 		return;
-		// go round again. Perhaps the error will go away
-  		// or the allocator is decommited & we will be asked to
-  		// exit soon.
   	}
   	hr = m_DecodedStream->DeliverCurrentPicture(pSample);
-  	if (FAILED(hr) && m_DecodedStream->mDecodeFilter->mEOSReceived)
+  	if (FAILED(hr) && m_DecodedStream->m_DecodeFilter->m_EOSReceived)
   	{
   		m_DecodedStream->m_EOS_Flag = TRUE; // testing!
-  		m_DecodedStream->mMpegController->EndEndOfStream();
-  		if (!m_DecodedStream->mDecodeFilter->mEOSDelivered)
+  		m_DecodedStream->m_MpegController->EndEndOfStream();
+  		if (!m_DecodedStream->m_DecodeFilter->m_EOSDelivered)
   		{
-  			m_DecodedStream->mDecodeFilter->mEOSDelivered = TRUE;
+  			m_DecodedStream->m_DecodeFilter->m_EOSDelivered = TRUE;
   			m_DecodedStream->DeliverEndOfStream();	
   		}
   	}

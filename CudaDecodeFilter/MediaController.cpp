@@ -1,10 +1,25 @@
+//------------------------------------------------------------------------------
+// File: MediaController.cpp
+// 
+// Author: Ren Yifei, Lin Ziya
+//
+// Contact: yfren@cs.hku.hk, zlin@cs.hku.hk
+//
+// Desc: The media controller class coordinates 
+// the smart cache (frame buffer) and the decoder
+//
+//------------------------------------------------------------------------------
+
 #include "MediaController.h"
 #include "SmartCache.h"
 #include "CudaDecoder.h"
 
-MediaController::MediaController() :	m_FaultFlag(0), m_IsEOS(0),m_StoreFlag(0), 
-										m_CudaH264Decoder(NULL), m_SmartCache(NULL), 
-										m_OutputImageSize(0)//testing
+MediaController::MediaController() :	m_FaultFlag(0), 
+										m_IsEOS(0),
+										m_StoreFlag(0), 
+										m_CudaH264Decoder(NULL), 
+										m_SmartCache(NULL), 
+										m_OutputImageSize(0)
 {
 
 }
@@ -16,7 +31,7 @@ MediaController::~MediaController()
 
 bool MediaController::Initialize( DecodedStream* outputPin )
 {
-	//Ð§ÂÊ testing
+	// testing
 	m_SmartCache = new SmartCache();
 
 	m_CudaH264Decoder = new CudaH264Decoder();
@@ -27,7 +42,6 @@ bool MediaController::Initialize( DecodedStream* outputPin )
 
 void MediaController::Uninitialize( void )
 {
-	//decoder?
 	if(m_CudaH264Decoder)
 	{
 		delete m_CudaH264Decoder;
@@ -53,7 +67,7 @@ void MediaController::SetOutputImageSize( long inImageSize )
 
 void MediaController::BeginFlush( void )
 {
-	m_FaultFlag = ERROR_FLUSH;   // Give a chance to exit decoding cycle !!!!!!!!!!!!!!!!!!!
+	m_FaultFlag = ERROR_FLUSH;   // Give a chance to exit decoding cycle.
 	m_SmartCache->BeginFlush();
 	Sleep(10);
 }
@@ -105,7 +119,7 @@ void MediaController::GetDecoded( unsigned char * outPicture )
 	}
 	else
 	{
-		memcpy(outPicture, m_CudaH264Decoder->GetOutputBufferPtr(), m_OutputImageSize); // testing ??
+		memcpy(outPicture, m_CudaH264Decoder->GetOutputBufferPtr(), m_OutputImageSize);
 	}
 }
 
