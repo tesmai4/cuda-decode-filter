@@ -1,3 +1,16 @@
+//------------------------------------------------------------------------------
+// File: SmartCache.h
+// 
+// Author: Ren Yifei, Lin Ziya
+//
+// Contact: yfren@cs.hku.hk, zlin@cs.hku.hk
+//
+// Desc: a automatic cache which works as a frame buffer. 
+// It is single  reader/writer mode and should be 
+// synchronized when reading or writing.
+//
+//------------------------------------------------------------------------------
+
 #ifndef SMART_CACHE_H_
 #define SMART_CACHE_H_
 
@@ -36,17 +49,17 @@ private:
 
 	CRITICAL_SECTION singleAccess;
 
-	unsigned char * gInputCache ;
-	long gCacheSize;
-	long gMinWorkSize;
-	long gReadingOffset;
-	long gWritingOffset;
-	BOOL gIsFlushing;
+	unsigned char* m_InputCache ;
+	long m_CacheSize;
+	long m_MinWorkSize;
+	long m_ReadingOffset;
+	long m_WritingOffset;
+	BOOL m_IsFlushing;
 
-	BOOL inputWaiting;
-	BOOL outputWaiting;
-	BOOL cacheChecking;
-	int  waitingCounter;
+	BOOL m_InputWaiting;
+	BOOL m_OutputWaiting;
+	BOOL m_CacheChecking;
+	int  m_WaitingCounter;
 };
 
 

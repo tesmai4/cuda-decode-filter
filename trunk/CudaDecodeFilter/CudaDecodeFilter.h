@@ -1,3 +1,15 @@
+//------------------------------------------------------------------------------
+// File: CudaDecodeFilter.h
+// 
+// Author: Ren Yifei, Lin Ziya
+//
+// Contact: yfren@cs.hku.hk, zlin@cs.hku.hk
+//
+// Desc: The main decoder class, manages the frame receive/deliver,
+// derived from CSource in DirectShow.
+//
+//------------------------------------------------------------------------------
+
 #ifndef CUDA_DECODE_FILTER_H_ 
 #define CUDA_DECODE_FILTER_H_
 
@@ -23,55 +35,51 @@ private:
 
 	virtual ~CudaDecodeFilter();
 
-private:
-
-	DecodedStream * OutputPin() {return (DecodedStream *) m_paStreams[0];};
-
 public:
 
 	DECLARE_IUNKNOWN;
-	// Basic COM - used here to reveal our own interfaces
-	STDMETHODIMP NonDelegatingQueryInterface(REFIID riid, void ** ppv);
+	
+	STDMETHODIMP		NonDelegatingQueryInterface(REFIID riid, void ** ppv);
 
-	// you need to supply these to access the pins from the enumerator
-	// and for default Stop and Pause/Run activation.
-	virtual int GetPinCount();
-	virtual CBasePin *GetPin(int n);
-	STDMETHODIMP FindPin(LPCWSTR Id, IPin ** ppPin);
+	virtual int			GetPinCount();
+	virtual CBasePin*	GetPin(int n);
+	STDMETHODIMP		FindPin(LPCWSTR Id, IPin ** ppPin);
 
-	STDMETHODIMP Stop();
-	STDMETHODIMP Pause();
-	HRESULT StartStreaming();
-	HRESULT StopStreaming();
+	STDMETHODIMP		Stop();
+	STDMETHODIMP		Pause();
+	HRESULT				StartStreaming();
+	HRESULT				StopStreaming();
 
 	// Input pin's delegating methods
-	HRESULT Receive(IMediaSample *pSample);
-	// if you override Receive, you may need to override these three too
-	HRESULT EndOfStream(void);
-	HRESULT BeginFlush(void);
-	HRESULT EndFlush(void);
-	HRESULT NewSegment(REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
+	HRESULT				Receive(IMediaSample *pSample);
+
+	HRESULT				EndOfStream(void);
+	HRESULT				BeginFlush(void);
+	HRESULT				EndFlush(void);
+	HRESULT				NewSegment(REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
 
 	// Output pin's delegating methods
-	HRESULT CompleteConnect(PIN_DIRECTION inDirection, IPin * inReceivePin);
+	HRESULT				CompleteConnect(PIN_DIRECTION inDirection, IPin * inReceivePin);
 
 private:
 
-	CudaDecodeInputPin *	m_CudaDecodeInputPin;
+	DecodedStream *		OutputPin() {return (DecodedStream*) m_paStreams[0];};
 
-	CCritSec				m_csReceive;
+private:
 
+	CudaDecodeInputPin*		m_CudaDecodeInputPin;
 	MediaController*		m_MediaController;
-
-	BOOL					mIsFlushing;
-	BOOL					mEOSDelivered;
-	BOOL					mEOSReceived;
+	CCritSec				m_csReceive;
+	
+	BOOL					m_IsFlushing;
+	BOOL					m_EOSDelivered;
+	BOOL					m_EOSReceived;
 
 	// Bitmap information
-	LONG               mImageWidth;
-	LONG               mImageHeight;
-	LONG               mOutputImageSize;
-	REFERENCE_TIME     mSampleDuration;
+	LONG					m_ImageWidth;
+	LONG					m_ImageHeight;
+	LONG					m_OutputImageSize;
+	REFERENCE_TIME			m_SampleDuration;
 };
 
 

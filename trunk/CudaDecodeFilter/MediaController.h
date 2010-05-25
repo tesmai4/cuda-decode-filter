@@ -1,3 +1,15 @@
+//------------------------------------------------------------------------------
+// File: MediaController.h
+// 
+// Author: Ren Yifei, Lin Ziya
+//
+// Contact: yfren@cs.hku.hk, zlin@cs.hku.hk
+//
+// Desc: The media controller class coordinates 
+// the smart cache (frame buffer) and the decoder
+//
+//------------------------------------------------------------------------------
+
 #ifndef MEDIA_CONTROLLER_H_
 #define MEDIA_CONTROLLER_H_
 
@@ -34,9 +46,6 @@ public:
 	BOOL IsCacheOutputWaiting(void);
 	BOOL IsCacheEmpty(void);
 
-	//testing
-// 	void SequenceHeaderChecking(void); !!!!!!!!!!!!!!!
-// 	BOOL LocatePictureHeader(void);
  	BOOL DecodeOnePicture(void);
 
 private:
@@ -50,7 +59,6 @@ private:
 	SmartCache* m_SmartCache;
 
 	CudaH264Decoder* m_CudaH264Decoder;
-
 };
 
 #endif

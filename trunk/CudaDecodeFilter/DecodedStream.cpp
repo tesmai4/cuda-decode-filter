@@ -1,3 +1,14 @@
+//------------------------------------------------------------------------------
+// File: DecodedStream.cpp
+// 
+// Author: Ren Yifei, Lin Ziya
+//
+// Contact: yfren@cs.hku.hk, zlin@cs.hku.hk
+//
+// Desc: The output pin class, handles delivery to downstream input pin.
+//
+//------------------------------------------------------------------------------
+
 #include "DecodedStream.h"
 #include "CudaDecodeInputPin.h"
 #include "CudaDecodeFilter.h"
@@ -6,30 +17,30 @@
 #include "MediaController.h"
 
 DecodedStream::DecodedStream(TCHAR * inObjectName,
-							   HRESULT * outResult, 
-							   CudaDecodeFilter * inFilter) :
-CSourceStream(inObjectName, outResult, inFilter, L"Output")
+							 HRESULT * outResult, 
+							 CudaDecodeFilter * inFilter) 
+: CSourceStream(inObjectName, outResult, inFilter, L"Output")
 {
-	mDecodeFilter = inFilter;
-	mPosition     = NULL;
-	mFlushing     = FALSE;
+	m_DecodeFilter = inFilter;
+	m_Position     = NULL;
+	m_Flushing     = FALSE;
 	m_EOS_Flag	  = FALSE;
-	mMpegController = NULL;
-	mSamplesSent    = 0;
+	m_MpegController = NULL;
+	m_SamplesSent    = 0;
 }
 
 DecodedStream::~DecodedStream()
 {
-	if (mPosition) 
+	if (m_Position) 
 	{
-		mPosition->Release();
-		mPosition = NULL;
+		m_Position->Release();
+		m_Position = NULL;
 	}
 }
 
 void DecodedStream::SetController(MediaController* inController)
 {
-	mMpegController = inController;
+	m_MpegController = inController;
 }
 
 HRESULT DecodedStream::FillBuffer(IMediaSample *pSample)
@@ -39,7 +50,7 @@ HRESULT DecodedStream::FillBuffer(IMediaSample *pSample)
 
 HRESULT DecodedStream::CompleteConnect(IPin *pReceivePin)
 {
-	HRESULT hr = mDecodeFilter->CompleteConnect(PINDIR_OUTPUT, pReceivePin);
+	HRESULT hr = m_DecodeFilter->CompleteConnect(PINDIR_OUTPUT, pReceivePin);
 	if (FAILED(hr)) 
 	{
 		return hr;
@@ -50,7 +61,7 @@ HRESULT DecodedStream::CompleteConnect(IPin *pReceivePin)
 HRESULT DecodedStream::DecideBufferSize(IMemAllocator * pAllocator, ALLOCATOR_PROPERTIES *pprop)
 {
 	// Is the input pin connected
-	if (!mDecodeFilter->m_CudaDecodeInputPin->IsConnected()) 
+	if (!m_DecodeFilter->m_CudaDecodeInputPin->IsConnected()) 
 	{
 		return E_UNEXPECTED;
 	}
@@ -59,7 +70,7 @@ HRESULT DecodedStream::DecideBufferSize(IMemAllocator * pAllocator, ALLOCATOR_PR
 	ASSERT(pprop);
 	HRESULT hr = NOERROR;
 
-	pprop->cbBuffer  = mDecodeFilter->mOutputImageSize;
+	pprop->cbBuffer  = m_DecodeFilter->m_OutputImageSize;
 	pprop->cBuffers  = 1;
 	pprop->cbAlign   = 1;
 
@@ -87,14 +98,14 @@ HRESULT DecodedStream::DecideBufferSize(IMemAllocator * pAllocator, ALLOCATOR_PR
 
 HRESULT DecodedStream::CheckMediaType(const CMediaType *mtOut)
 {
-	if (mDecodeFilter->m_CudaDecodeInputPin->IsConnected())
+	if (m_DecodeFilter->m_CudaDecodeInputPin->IsConnected())
 	{
 		if ((mtOut->subtype == MEDIASUBTYPE_IYUV || mtOut->subtype == MEDIASUBTYPE_RGB24) 
 			&& mtOut->formattype == FORMAT_VideoInfo)
 		{
 			VIDEOINFOHEADER * pFormat = (VIDEOINFOHEADER *) mtOut->pbFormat;
-			if (pFormat->bmiHeader.biHeight == mDecodeFilter->mImageHeight &&
-				pFormat->bmiHeader.biWidth == mDecodeFilter->mImageWidth)
+			if (pFormat->bmiHeader.biHeight == m_DecodeFilter->m_ImageHeight &&
+				pFormat->bmiHeader.biWidth == m_DecodeFilter->m_ImageWidth)
 			{
 				return S_OK;
 			}
@@ -105,7 +116,7 @@ HRESULT DecodedStream::CheckMediaType(const CMediaType *mtOut)
 
 HRESULT DecodedStream::GetMediaType(int iPosition, CMediaType *pMediaType)
 {
-	if (!mDecodeFilter->m_CudaDecodeInputPin->IsConnected() || iPosition < 0 || iPosition > 1)
+	if (!m_DecodeFilter->m_CudaDecodeInputPin->IsConnected() || iPosition < 0 || iPosition > 1)
 	{
 		return E_FAIL;
 	}
@@ -130,10 +141,10 @@ HRESULT DecodedStream::GetMediaType(int iPosition, CMediaType *pMediaType)
 	pMediaType->SetFormatType(&FORMAT_VideoInfo);
 	format.bmiHeader.biSize   = sizeof(BITMAPINFOHEADER);
 	format.bmiHeader.biPlanes = 1;
-	format.AvgTimePerFrame    = mDecodeFilter->mSampleDuration;
-	format.bmiHeader.biWidth  = mDecodeFilter->mImageWidth;
-	format.bmiHeader.biHeight = mDecodeFilter->mImageHeight;
-	format.bmiHeader.biSizeImage = mDecodeFilter->mImageWidth * mDecodeFilter->mImageHeight * format.bmiHeader.biBitCount / 8;
+	format.AvgTimePerFrame    = m_DecodeFilter->m_SampleDuration;
+	format.bmiHeader.biWidth  = m_DecodeFilter->m_ImageWidth;
+	format.bmiHeader.biHeight = m_DecodeFilter->m_ImageHeight;
+	format.bmiHeader.biSizeImage = m_DecodeFilter->m_ImageWidth * m_DecodeFilter->m_ImageHeight * format.bmiHeader.biBitCount / 8;
 	pMediaType->SetFormat(PBYTE(&format), sizeof(VIDEOINFOHEADER));
 	return S_OK;
 } // GetMediaType
@@ -153,19 +164,19 @@ STDMETHODIMP DecodedStream::NonDelegatingQueryInterface(REFIID riid, void **ppv)
 	if (riid == IID_IMediaPosition || riid == IID_IMediaSeeking) 
 	{
 		// we should have an input pin by now
-		ASSERT(mDecodeFilter->m_CudaDecodeInputPin != NULL);
-		if (mPosition == NULL) 
+		ASSERT(m_DecodeFilter->m_CudaDecodeInputPin != NULL);
+		if (m_Position == NULL) 
 		{
 			HRESULT hr = CreatePosPassThru(GetOwner(),
 				FALSE,
-				(IPin *)mDecodeFilter->m_CudaDecodeInputPin,
-				&mPosition);
+				(IPin *)m_DecodeFilter->m_CudaDecodeInputPin,
+				&m_Position);
 			if (FAILED(hr)) 
 			{
 				return hr;
 			}
 		}
-		return mPosition->QueryInterface(riid, ppv);
+		return m_Position->QueryInterface(riid, ppv);
 	}
 	else 
 	{
@@ -177,24 +188,24 @@ STDMETHODIMP DecodedStream::Notify(IBaseFilter * pSender, Quality q)
 {
 	UNREFERENCED_PARAMETER(pSender);
 	ValidateReadPtr(pSender, sizeof(IBaseFilter));
-	return mDecodeFilter->m_CudaDecodeInputPin->PassNotify(q);
+	return m_DecodeFilter->m_CudaDecodeInputPin->PassNotify(q);
 } // Notify
 
 STDMETHODIMP DecodedStream::BeginFlush(void)
 {
-	mFlushing = TRUE;
-	mMpegController->BeginFlush();
+	m_Flushing = TRUE;
+	m_MpegController->BeginFlush();
 	{
-		CAutoLock   lck(&mDataAccess);
-		mSamplesSent   = 0;
+		CAutoLock   lck(&m_DataAccess);
+		m_SamplesSent   = 0;
 	}
 	return NOERROR;
 }
 
 STDMETHODIMP DecodedStream::EndFlush(void)
 {
-	mMpegController->EndFlush();
-	mFlushing = FALSE;
+	m_MpegController->EndFlush();
+	m_Flushing = FALSE;
 	return NOERROR;
 }
 
@@ -214,15 +225,15 @@ HRESULT DecodedStream::DoBufferProcessingLoop(void)
 		while (!CheckRequest(&com)) 
 		{
 			// If no data, never enter blocking reading
-			if (mFlushing || mMpegController->IsCacheEmpty() || m_EOS_Flag) 
+			if (m_Flushing || m_MpegController->IsCacheEmpty() || m_EOS_Flag) 
 			{
-				if (mDecodeFilter->mEOSReceived)
+				if (m_DecodeFilter->m_EOSReceived)
 				{
 					m_EOS_Flag = TRUE;
-					mMpegController->EndEndOfStream();
-					if (!mDecodeFilter->mEOSDelivered)
+					m_MpegController->EndEndOfStream();
+					if (!m_DecodeFilter->m_EOSDelivered)
 					{
-						mDecodeFilter->mEOSDelivered = TRUE;
+						m_DecodeFilter->m_EOSDelivered = TRUE;
 						DeliverEndOfStream();	
 					}
 				}
@@ -231,9 +242,9 @@ HRESULT DecodedStream::DoBufferProcessingLoop(void)
 				continue;
 			}
 
-			mMpegController->m_SmartCache->ResetCacheChecking();
+			m_MpegController->m_SmartCache->ResetCacheChecking();
 
-			BOOL pass = mMpegController->DecodeOnePicture();
+			BOOL pass = m_MpegController->DecodeOnePicture();
 		}
 
 		// For all commands sent to us there must be a Reply call!
@@ -260,7 +271,7 @@ HRESULT DecodedStream::DoBufferProcessingLoop(void)
 
 HRESULT DecodedStream::OnThreadStartPlay(void)
 {
-	mSamplesSent = 0;
+	m_SamplesSent = 0;
 	return NOERROR;
 }
 
@@ -271,30 +282,26 @@ HRESULT DecodedStream::OnThreadDestroy(void)
 
 HRESULT DecodedStream::DeliverCurrentPicture(IMediaSample * pSample)
 {
-	PBYTE   pOut; // testing!! you don't have .....
-	//pOut = new BYTE[1024*1024*4];
+	PBYTE   pOut;
 
 	pSample->GetPointer(&pOut);
-	mMpegController->GetDecoded(pOut);//ÄÚ´æÐ¹Â©? pOut?
-	pSample->SetActualDataLength(mDecodeFilter->mOutputImageSize);
+	m_MpegController->GetDecoded(pOut);
+	pSample->SetActualDataLength(m_DecodeFilter->m_OutputImageSize);
 	ULONG    alreadySent = 0;
 	{
-		CAutoLock   lck(&mDataAccess);
-		alreadySent  = mSamplesSent;
-		mSamplesSent++;
+		CAutoLock   lck(&m_DataAccess);
+		alreadySent  = m_SamplesSent;
+		m_SamplesSent++;
 	}
 	LONGLONG   llStart = alreadySent;
 	LONGLONG   llEnd   = alreadySent + 1;
 	pSample->SetMediaTime(&llStart, &llEnd);
-	REFERENCE_TIME	rtStart = alreadySent * mDecodeFilter->mSampleDuration;
-	REFERENCE_TIME	rtEnd   = (alreadySent + 1) * mDecodeFilter->mSampleDuration;
+	REFERENCE_TIME	rtStart = alreadySent * m_DecodeFilter->m_SampleDuration;
+	REFERENCE_TIME	rtEnd   = (alreadySent + 1) * m_DecodeFilter->m_SampleDuration;
 	pSample->SetTime(&rtStart, &rtEnd);
 	pSample->SetDiscontinuity(FALSE);
 	pSample->SetPreroll(FALSE);
 	pSample->SetSyncPoint(TRUE);
-
-// 	AM_MEDIA_TYPE* pMtest;
-// 	pSample->GetMediaType(&pMtest);
 	
 	HRESULT hr = Deliver(pSample);
 	pSample->Release();

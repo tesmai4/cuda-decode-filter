@@ -1,3 +1,14 @@
+//------------------------------------------------------------------------------
+// File: StdHeader.h
+// 
+// Author: Ren Yifei, Lin Ziya
+//
+// Contact: yfren@cs.hku.hk, zlin@cs.hku.hk
+//
+// Desc: Include some standard LIBs, constants and GUIDs.
+//
+//------------------------------------------------------------------------------
+
 #ifndef STD_HEADER_H_
 #define STD_HEADER_H_
 
@@ -14,16 +25,16 @@
 #include <nvcuvid.h>
 #include <cudad3d9.h>
 
-#define SMART_CACHE_SIZE	1024*1024// testing! repeat pattern 1024 1024
+#define SMART_CACHE_SIZE	1024*1024
 #define MIN_WORK_SIZE		10*1024
-#define DECODER_BUFFER_SIZE 256*1024 // tesing ! 65536
+#define DECODER_BUFFER_SIZE 256*1024
 
 #define STORE_RGB24		1
 #define STORE_IYUY		2
 #define ERROR_FLUSH     200
 
 #define MAX_FRM_CNT             16
-#define DISPLAY_DELAY           1  // testing! 4 and use_async = 0 is also OK ? Attempt to decode up to 4 frames ahead of display // why  4 will wrong? 1 is ok
+#define DISPLAY_DELAY           1  // FIXME, = 4 will trigger repeat pattern
 #define USE_ASYNC_COPY          0
 #define USE_FLOATING_CONTEXTS   1  // Use floating contexts
 
